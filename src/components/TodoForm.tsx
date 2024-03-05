@@ -1,5 +1,5 @@
 import { addTodo } from "@/services/tasks";
-import { Box, Button, Input, Text, Toast, VStack } from "@chakra-ui/react";
+import { Box, Button, Input, Text, VStack, useToast } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "react-query";
 
@@ -9,6 +9,7 @@ const TodoForm = () => {
     description: "",
   });
   const { title, description } = formData;
+  const TOAST = useToast();
 
   const queryClient = useQueryClient();
 
@@ -23,12 +24,13 @@ const TodoForm = () => {
       title: "",
       description: "",
     });
-    Toast({
+    TOAST({
       title: "Todo created.",
       description: "Added todo",
       status: "success",
       duration: 9000,
       isClosable: true,
+      position: "bottom-right",
     });
   };
 

@@ -7,6 +7,7 @@ import {
   Input,
   Text,
   useBreakpointValue,
+  useToast,
 } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "react-query";
@@ -15,12 +16,12 @@ interface TodoListItemProps {
   todo: TODO;
 }
 
-const TodoListItem: React.FC<TodoListItemProps> = (props) => {
-  const { todo } = props;
-  const [editedData, setEditedData] = useState({
+const TodoListItem: React.FC<TodoListItemProps> = ({ todo }) => {
+  const [editedData, setEditedData] = useState<UPDATED_TODO>({
     title: todo.title,
     description: todo.description,
   });
+  const TOAST = useToast();
 
   const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
@@ -44,6 +45,14 @@ const TodoListItem: React.FC<TodoListItemProps> = (props) => {
       updatedTodo: editedData,
     });
     setIsEditing(false);
+    TOAST({
+      title: "Todo updated.",
+      description: "Updated todo successfully",
+      status: "success",
+      duration: 9000,
+      isClosable: true,
+      position: "bottom-right",
+    });
   };
 
   const handleEdit = () => {
@@ -53,9 +62,19 @@ const TodoListItem: React.FC<TodoListItemProps> = (props) => {
   const { mutate: handleDelete } = useMutation(deleteTodo, {
     onSuccess: () => {
       queryClient.invalidateQueries("tasks");
+      TOAST({
+        title: "Todo deleted.",
+        description: "Deleted todo successfully",
+        status: "success",
+        duration: 9000,
+        isClosable: true,
+        position: "bottom-right",
+      });
     },
   });
-  const truncatedLength = useBreakpointValue({ base: 10, sm: 20 }) || 15;
+
+  const truncatedLength =
+    useBreakpointValue<number>({ base: 10, sm: 20 }) || 15;
 
   return (
     <Flex
