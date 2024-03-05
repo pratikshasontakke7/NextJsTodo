@@ -1,29 +1,39 @@
-import { addTodo } from "@/services/tasks";
 import { Box, Button, Input, Text, VStack, useToast } from "@chakra-ui/react";
-import React, { useState } from "react";
+import React from "react";
+import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "react-query";
+import { addTodo } from "@/services/tasks"; // Assuming ADD_TODO_PAYLOAD type is imported from "@/services/tasks"
+import { ADD_TODO_PAYLOAD } from "@/types/payload";
+
+interface FormData extends ADD_TODO_PAYLOAD {}
 
 const TodoForm = () => {
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-  });
-  const { title, description } = formData;
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>();
   const TOAST = useToast();
-
   const queryClient = useQueryClient();
+  {
+    console.log({ isSubmitting });
+  }
 
   const addTodoMutation = useMutation(addTodo, {
     onSuccess: () => {
       queryClient.invalidateQueries("tasks");
     },
   });
-  const handleAddTodo = async () => {
-    await addTodoMutation.mutateAsync({ title, description });
-    setFormData({
-      title: "",
-      description: "",
-    });
+
+  const onSubmit = async (data: FormData) => {
+    const todoPayload: ADD_TODO_PAYLOAD = {
+      title: data.title,
+      description: data.description,
+    };
+
+    await addTodoMutation.mutateAsync(todoPayload);
+    reset();
     TOAST({
       title: "Todo created.",
       description: "Added todo",
@@ -34,40 +44,43 @@ const TodoForm = () => {
     });
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
   return (
     <Box w="100%" p={4} borderRadius="lg" boxShadow={"md"}>
-      <VStack spacing={4} align="stretch">
+      <VStack
+        spacing={4}
+        align="stretch"
+        as="form"
+        onSubmit={handleSubmit(onSubmit)}
+      >
         <Text fontSize="lg" fontWeight="semibold">
           Title
         </Text>
         <Input
           type="text"
-          value={title}
-          onChange={handleChange}
-          name="title"
+          {...register("title", { required: "Title is required" })}
           placeholder="Enter todo title"
           size="md"
         />
+        {errors.title && <Text color="red">{errors.title.message}</Text>}
         <Text fontSize="lg" fontWeight="semibold">
           Description
         </Text>
         <Input
           type="text"
-          value={description}
-          onChange={handleChange}
-          name="description"
+          {...register("description", { required: "Description is required" })}
           placeholder="Enter todo description"
           size="md"
         />
-        <Button colorScheme="teal" mt={4} onClick={handleAddTodo}>
+        {errors.description && (
+          <Text color="red">{errors.description.message}</Text>
+        )}
+
+        <Button
+          colorScheme="teal"
+          mt={4}
+          type="submit"
+          isLoading={isSubmitting}
+        >
           Add Todo
         </Button>
       </VStack>
